@@ -1,98 +1,95 @@
 import React from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import css from "./NoteForm.module.css";
-import { NoteTag } from "../../types/note";
 
-interface NoteFormValues {
-  title: string;
-  content: string;
-  tag: NoteTag;
-}
+import { createNote, CreateNoteData } from "../../services/noteService";
 
 interface NoteFormProps {
-  onSubmit: (values: NoteFormValues) => void;
   onCancel: () => void;
 }
 
 const validationSchema = Yup.object({
-  title: Yup.string()
-    .min(3, "Мінімум 3 символи")
-    .max(50, "Максимум 50 символів")
-    .required("Обов'язкове поле"),
-  content: Yup.string().max(500, "Максимум 500 символів"),
-  tag: Yup.mixed<NoteTag>()
-    .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"], "Невірний тег")
-    .required("Обов'язкове поле"),
+  title: Yup.string().required("Обов'язкове поле"),
+  content: Yup.string().required("Обов'язкове поле"),
+  tag: Yup.string().required("Обов'язкове поле"),
 });
 
-const initialValues: NoteFormValues = {
+const initialValues: CreateNoteData = {
   title: "",
   content: "",
-  tag: "Todo",
+  tag: "general",
 };
 
-export const NoteForm: React.FC<NoteFormProps> = ({ onSubmit, onCancel }) => {
+export const NoteForm: React.FC<NoteFormProps> = ({ onCancel }) => {
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onCancel();
+    },
+  });
+
   return (
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={(values, { setSubmitting, resetForm }) => {
-        onSubmit(values);
-        setSubmitting(false);
-        resetForm();
+      onSubmit={(values, { setSubmitting }) => {
+        createMutation.mutate(values, {
+          onSettled: () => {
+            setSubmitting(false);
+          },
+        });
       }}
     >
       {({ isSubmitting }) => (
-        <Form className={css.form} noValidate>
-          <div className={css.formGroup}>
-            <label htmlFor="title">Title</label>
-            <Field id="title" name="title" type="text" className={css.input} />
-            <ErrorMessage name="title" component="span" className={css.error} />
-          </div>
+        <Form className={css.form}>
+          <label htmlFor="title" className={css.label}>
+            Заголовок:
+          </label>
+          <Field id="title" name="title" type="text" className={css.input} />
+          <ErrorMessage name="title" component="div" className={css.error} />
 
-          <div className={css.formGroup}>
-            <label htmlFor="content">Content</label>
-            <Field
-              as="textarea"
-              id="content"
-              name="content"
-              rows={8}
-              className={css.textarea}
-            />
-            <ErrorMessage
-              name="content"
-              component="span"
-              className={css.error}
-            />
-          </div>
+          <label htmlFor="content" className={css.label}>
+            Вміст:
+          </label>
+          <Field
+            id="content"
+            name="content"
+            as="textarea"
+            rows={5}
+            className={css.textarea}
+          />
+          <ErrorMessage name="content" component="div" className={css.error} />
 
-          <div className={css.formGroup}>
-            <label htmlFor="tag">Tag</label>
-            <Field as="select" id="tag" name="tag" className={css.select}>
-              <option value="Todo">Todo</option>
-              <option value="Work">Work</option>
-              <option value="Personal">Personal</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Shopping">Shopping</option>
-            </Field>
-            <ErrorMessage name="tag" component="span" className={css.error} />
-          </div>
+          <label htmlFor="tag" className={css.label}>
+            Тег:
+          </label>
+          <Field as="select" id="tag" name="tag" className={css.select}>
+            <option value="general">General</option>
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+          </Field>
+          <ErrorMessage name="tag" component="div" className={css.error} />
 
-          <div className={css.actions}>
-            <button
-              type="button"
-              className={css.cancelButton}
-              onClick={onCancel}
-            >
-              Cancel
-            </button>
+          <div className={css.buttons}>
             <button
               type="submit"
-              className={css.submitButton}
               disabled={isSubmitting}
+              className={css.submitButton}
             >
-              Create note
+              {isSubmitting ? "Створення..." : "Створити"}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className={css.cancelButton}
+            >
+              Відміна
             </button>
           </div>
         </Form>

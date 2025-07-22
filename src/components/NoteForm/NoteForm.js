@@ -1,26 +1,33 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import css from "./NoteForm.module.css";
+import { createNote } from "../../services/noteService";
 const validationSchema = Yup.object({
-    title: Yup.string()
-        .min(3, "Мінімум 3 символи")
-        .max(50, "Максимум 50 символів")
-        .required("Обов'язкове поле"),
-    content: Yup.string().max(500, "Максимум 500 символів"),
-    tag: Yup.mixed()
-        .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"], "Невірний тег")
-        .required("Обов'язкове поле"),
+    title: Yup.string().required("Обов'язкове поле"),
+    content: Yup.string().required("Обов'язкове поле"),
+    tag: Yup.string().required("Обов'язкове поле"),
 });
 const initialValues = {
     title: "",
     content: "",
-    tag: "Todo",
+    tag: "general",
 };
-export const NoteForm = ({ onSubmit, onCancel }) => {
-    return (_jsx(Formik, { initialValues: initialValues, validationSchema: validationSchema, onSubmit: (values, { setSubmitting, resetForm }) => {
-            onSubmit(values);
-            setSubmitting(false);
-            resetForm();
-        }, children: ({ isSubmitting }) => (_jsxs(Form, { className: css.form, noValidate: true, children: [_jsxs("div", { className: css.formGroup, children: [_jsx("label", { htmlFor: "title", children: "Title" }), _jsx(Field, { id: "title", name: "title", type: "text", className: css.input }), _jsx(ErrorMessage, { name: "title", component: "span", className: css.error })] }), _jsxs("div", { className: css.formGroup, children: [_jsx("label", { htmlFor: "content", children: "Content" }), _jsx(Field, { as: "textarea", id: "content", name: "content", rows: 8, className: css.textarea }), _jsx(ErrorMessage, { name: "content", component: "span", className: css.error })] }), _jsxs("div", { className: css.formGroup, children: [_jsx("label", { htmlFor: "tag", children: "Tag" }), _jsxs(Field, { as: "select", id: "tag", name: "tag", className: css.select, children: [_jsx("option", { value: "Todo", children: "Todo" }), _jsx("option", { value: "Work", children: "Work" }), _jsx("option", { value: "Personal", children: "Personal" }), _jsx("option", { value: "Meeting", children: "Meeting" }), _jsx("option", { value: "Shopping", children: "Shopping" })] }), _jsx(ErrorMessage, { name: "tag", component: "span", className: css.error })] }), _jsxs("div", { className: css.actions, children: [_jsx("button", { type: "button", className: css.cancelButton, onClick: onCancel, children: "Cancel" }), _jsx("button", { type: "submit", className: css.submitButton, disabled: isSubmitting, children: "Create note" })] })] })) }));
+export const NoteForm = ({ onCancel }) => {
+    const queryClient = useQueryClient();
+    const createMutation = useMutation({
+        mutationFn: createNote,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notes"] });
+            onCancel();
+        },
+    });
+    return (_jsx(Formik, { initialValues: initialValues, validationSchema: validationSchema, onSubmit: (values, { setSubmitting }) => {
+            createMutation.mutate(values, {
+                onSettled: () => {
+                    setSubmitting(false);
+                },
+            });
+        }, children: ({ isSubmitting }) => (_jsxs(Form, { className: css.form, children: [_jsx("label", { htmlFor: "title", className: css.label, children: "\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A:" }), _jsx(Field, { id: "title", name: "title", type: "text", className: css.input }), _jsx(ErrorMessage, { name: "title", component: "div", className: css.error }), _jsx("label", { htmlFor: "content", className: css.label, children: "\u0412\u043C\u0456\u0441\u0442:" }), _jsx(Field, { id: "content", name: "content", as: "textarea", rows: 5, className: css.textarea }), _jsx(ErrorMessage, { name: "content", component: "div", className: css.error }), _jsx("label", { htmlFor: "tag", className: css.label, children: "\u0422\u0435\u0433:" }), _jsxs(Field, { as: "select", id: "tag", name: "tag", className: css.select, children: [_jsx("option", { value: "general", children: "General" }), _jsx("option", { value: "work", children: "Work" }), _jsx("option", { value: "personal", children: "Personal" })] }), _jsx(ErrorMessage, { name: "tag", component: "div", className: css.error }), _jsxs("div", { className: css.buttons, children: [_jsx("button", { type: "submit", disabled: isSubmitting, className: css.submitButton, children: isSubmitting ? "Створення..." : "Створити" }), _jsx("button", { type: "button", onClick: onCancel, disabled: isSubmitting, className: css.cancelButton, children: "\u0412\u0456\u0434\u043C\u0456\u043D\u0430" })] })] })) }));
 };

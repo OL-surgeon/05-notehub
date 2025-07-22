@@ -10,6 +10,7 @@ const axiosInstance = axios.create({
         Authorization: `Bearer ${token}`,
     },
 });
+// Тепер deleteNote повертає об’єкт видаленої нотатки (Note)
 export const fetchNotes = async (params) => {
     const { page = 1, perPage = 12, search = "" } = params;
     const queryParams = { page, perPage };

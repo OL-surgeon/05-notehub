@@ -34,11 +34,7 @@ export interface CreateNoteData {
   tag: NoteTag;
 }
 
-export interface DeleteNoteResponse {
-  message: string;
-  deletedNoteId: string;
-}
-
+// Тепер deleteNote повертає об’єкт видаленої нотатки (Note)
 export const fetchNotes = async (
   params: FetchNotesParams
 ): Promise<FetchNotesResponse> => {
@@ -61,9 +57,7 @@ export const createNote = async (data: CreateNoteData): Promise<Note> => {
   return note;
 };
 
-export const deleteNote = async (id: string): Promise<DeleteNoteResponse> => {
-  const { data } = await axiosInstance.delete<DeleteNoteResponse>(
-    `/notes/${id}`
-  );
+export const deleteNote = async (id: number): Promise<Note> => {
+  const { data } = await axiosInstance.delete<Note>(`/notes/${id}`);
   return data;
 };

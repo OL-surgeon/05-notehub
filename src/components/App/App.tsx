@@ -5,10 +5,8 @@ import css from "./App.module.css";
 
 import {
   fetchNotes,
-  createNote,
   deleteNote,
   FetchNotesResponse,
-  CreateNoteData,
 } from "../../services/noteService";
 
 import { NoteList } from "../NoteList/NoteList";
@@ -32,14 +30,6 @@ export const App: React.FC = () => {
     placeholderData: (previousData) => previousData,
   });
 
-  const createMutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
   const deleteMutation = useMutation({
     mutationFn: deleteNote,
     onSuccess: () => {
@@ -47,11 +37,7 @@ export const App: React.FC = () => {
     },
   });
 
-  const handleCreate = (data: CreateNoteData) => {
-    createMutation.mutate(data);
-  };
-
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     if (window.confirm("Ви впевнені, що хочете видалити нотатку?")) {
       deleteMutation.mutate(id);
     }
@@ -95,10 +81,7 @@ export const App: React.FC = () => {
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
-          <NoteForm
-            onSubmit={handleCreate}
-            onCancel={() => setIsModalOpen(false)}
-          />
+          <NoteForm onCancel={() => setIsModalOpen(false)} />
         </Modal>
       )}
     </div>
