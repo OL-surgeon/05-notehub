@@ -4,32 +4,47 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import css from "./NoteForm.module.css";
 
-import { createNote, CreateNoteData } from "../../services/noteService";
+import { createNote } from "../../services/noteService";
+import { NoteTag, CreateNoteData } from "../../types/note";
 
 interface NoteFormProps {
   onCancel: () => void;
+  onSuccess: () => void;
 }
 
+const allowedTags: NoteTag[] = [
+  "Todo",
+  "Work",
+  "Personal",
+  "Meeting",
+  "Shopping",
+];
+
 const validationSchema = Yup.object({
-  title: Yup.string().required("Обов'язкове поле"),
-  content: Yup.string().required("Обов'язкове поле"),
-  tag: Yup.string().required("Обов'язкове поле"),
+  title: Yup.string()
+    .min(3, "Мінімум 3 символи")
+    .max(50, "Максимум 50 символів")
+    .required("Обов'язкове поле"),
+  content: Yup.string().max(500, "Максимум 500 символів").notRequired(),
+  tag: Yup.mixed<NoteTag>()
+    .oneOf(allowedTags, "Недійсний тег")
+    .required("Оберіть тег"),
 });
 
 const initialValues: CreateNoteData = {
   title: "",
   content: "",
-  tag: "general",
+  tag: "Todo",
 };
 
-export const NoteForm: React.FC<NoteFormProps> = ({ onCancel }) => {
+export const NoteForm: React.FC<NoteFormProps> = ({ onCancel, onSuccess }) => {
   const queryClient = useQueryClient();
 
-  const createMutation = useMutation({
-    mutationFn: createNote,
+  const mutation = useMutation({
+    mutationFn: (data: CreateNoteData) => createNote(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
-      onCancel();
+      onSuccess();
     },
   });
 
@@ -38,10 +53,8 @@ export const NoteForm: React.FC<NoteFormProps> = ({ onCancel }) => {
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={(values, { setSubmitting }) => {
-        createMutation.mutate(values, {
-          onSettled: () => {
-            setSubmitting(false);
-          },
+        mutation.mutate(values, {
+          onSettled: () => setSubmitting(false),
         });
       }}
     >
@@ -69,9 +82,11 @@ export const NoteForm: React.FC<NoteFormProps> = ({ onCancel }) => {
             Тег:
           </label>
           <Field as="select" id="tag" name="tag" className={css.select}>
-            <option value="general">General</option>
-            <option value="work">Work</option>
-            <option value="personal">Personal</option>
+            {allowedTags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
           </Field>
           <ErrorMessage name="tag" component="div" className={css.error} />
 

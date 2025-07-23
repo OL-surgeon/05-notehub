@@ -7,10 +7,10 @@ export interface Note {
   updatedAt: string;
 }
 
-export type NoteTag =
-  | "Todo"
-  | "Work"
-  | "Personal"
-  | "Meeting"
-  | "Shopping"
-  | "general";
+export type NoteTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
+
+export interface CreateNoteData {
+  title: string;
+  content: string;
+  tag: NoteTag;
+}

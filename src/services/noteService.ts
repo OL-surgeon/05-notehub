@@ -34,7 +34,6 @@ export interface CreateNoteData {
   tag: NoteTag;
 }
 
-// Тепер deleteNote повертає об’єкт видаленої нотатки (Note)
 export const fetchNotes = async (
   params: FetchNotesParams
 ): Promise<FetchNotesResponse> => {

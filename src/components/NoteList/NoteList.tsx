@@ -6,7 +6,7 @@ import { deleteNote } from "../../services/noteService";
 
 interface NoteListProps {
   notes: Note[];
-  onDelete: (id: number) => void;
+  onDelete?: (id: number) => void;
 }
 
 export const NoteList: React.FC<NoteListProps> = ({ notes }) => {
